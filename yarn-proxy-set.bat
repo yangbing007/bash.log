@@ -1,3 +1,5 @@
+##choco install yarn
+
 yarn config set proxy http://username:password@server:port
 yarn confit set https-proxy http://username:password@server:port
 
