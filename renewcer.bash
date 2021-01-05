@@ -19,3 +19,13 @@ cp xxxxxxx xxxxxxx
 rm xxxxxxx -f
 rm xxxxxxx -f
 systemctl start nginx
+
+
+~/.acme.sh/acme.sh --issue -d www.godprox.top --standalone -k 4096
+
+~/.acme.sh/acme.sh --issue -d www.wanhy.cn --standalone -k 4096
+
+ln -s  /root/acmesh/wwwwanhycn/ /root/.acme.sh/www.wanhy.cn/
+
+ln -s  /root/acmeshwwwwanhycn/ /root/.acme.sh/www.wanhy.cn/
+
