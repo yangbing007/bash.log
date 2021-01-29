@@ -1,0 +1,144 @@
+mkdir x509certificate
+cd x509certificate
+
+mkdir root
+cd root
+
+mkdir ca
+cd ca
+mkdir certs crl newcerts private
+chmod 700 private
+touch index.txt
+echo 1000 > serial
+
+mkdir intermediate
+cd intermediate
+mkdir certs crl csr newcerts private
+chmod 700 private
+#touch index.txt
+echo 1000 > serial
+echo 1000 > crlnumber
+
+#cd ~/x509certificate/root/ca
+cd C:\Users\m1596\x509certificate\root\ca
+#touch index.txt
+#echo | set /p="1000" > serial
+
+#cd intermediate
+#touch index.txt
+#echo | set /p="1000" > serial
+#echo | set /p="1000" > crlnumber
+
+cd ..
+
+##Extract the root configuration file [4] from the attachment (configurationFiles.zip) and save it as “openssl.cfg” at C:\root\ca
+
+##For instance “C:\root\ca\openssl.cfg”
+
+##Extract the intermediate configuration file [5] from the attachment (configurationFiles.zip) and save it as “openssl.cfg” at C:\root\ca\intermediate
+
+##For instance "C:\root\ca\intermediate\openssl.cfg"
+
+#set RANDFILE=~/x509certificate/root/ca/private/.rnd
+#set OPENSSL_CONF=~/x509certificate/root/ca/openssl.cfg
+
+set RANDFILE=C:\Users\m1596\x509certificate\root\ca\private\.rand
+set OPENSSL_CONF=C:\Users\m1596\x509certificate\root\ca\openssl.cfg
+
+#openssl in windows mingwin64,can't work!!!
+/c/"Program Files"/OpenSSL-Win64/bin/openssl.exe
+genrsa -aes256 -out private/ca.key.pem 4096
+
+#window cmd,work fine!!!
+"C:\Program Files\OpenSSL-Win64\bin\openssl.exe"
+genrsa -aes256 -out C:\Users\m1596\x509certificate\root\ca\private\ca.key.pem 4096
+#>Enter pass phrase for ca.key.pem: secretpassword
+#>Verifying - Enter pass phrase for ca.key.pem: secretpassword
+exit
+#chmod 400 private/ca.key.pem
+set DirCur=C:\Users\m1596\x509certificate\root\ca
+#req -config %DirCur%\openssl.cfg -key %DirCur%\private\ca.key.pem -new -x509 -days 7300 -sha256 -extensions v3_ca -out %DirCur%\certs\ca.cert.pem
+req -config openssl.cfg -key private\ca.key.pem -new -x509 -days 7300 -sha256 -extensions v3_ca -out certs\ca.cert.pem
+#chmod 444 certs/ca.cert.pem
+#Verify the root certificate
+x509 -noout -text -in certs\ca.cert.pem
+
+#openssl in linux
+openssl genrsa -aes256 -out private/ca.key.pem 4096
+chmod 400 private/ca.key.pem
+
+
+##Create a Root Key
+#genrsa -aes256 -out private/ca.key.pem 4096
+
+##Create a Root Certificate (this is self-signed certificate)
+#req -config openssl.cnf \ -key private/ca.key.pem \ -new -x509 -days 7300 -sha256 -extensions v3_ca \ -out certs/ca.cert.pem
+
+cd C:\Users\m1596\x509certificate\root\ca\intermediate
+genrsa -aes256 -out private\intermediate.key.pem 4096
+#>Enter pass phrase for intermediate.key.pem: secretpassword
+#>Verifying - Enter pass phrase for intermediate.key.pem: secretpassword
+
+# chmod 400 intermediate/private/intermediate.key.pem
+
+req -config openssl.cnf -new -sha256 -key private\intermediate.key.pem -out csr\intermediate.csr.pem
+
+cd C:\Users\m1596\x509certificate\root\ca
+#cd /root/ca
+# openssl 
+ca -config openssl.cfg -extensions v3_intermediate_ca -days 3650 -notext -md sha256 -in intermediate\csr\intermediate.csr.pem -out intermediate\certs\intermediate.cert.pem
+
+#>Enter pass phrase for ca.key.pem: secretpassword
+#>Sign the certificate? [y/n]: y
+
+# chmod 444 intermediate/certs/intermediate.cert.pem
+
+x509 -noout -text -in intermediate/certs/intermediate.cert.pem
+verify -CAfile certs/ca.cert.pem intermediate/certs/intermediate.cert.pem
+
+##Get CA-Chain Cert
+#cat intermediate/certs/intermediate.cert.pem certs/ca.cert.pem > intermediate/certs/ca-chain.cert.pem
+type intermediate\certs\intermediate.cert.pem certs\ca.cert.pem > intermediate\certs\ca-chain.cert.pem
+# chmod 444 intermediate/certs/ca-chain.cert.pem
+
+cd C:\Users\m1596\x509certificate\root\ca
+##Create a Server Key
+genrsa -aes256 -out intermediate/private/zk-wenergy.com.cn.key.pem 2048
+#chmod 400 intermediate/private/zk-wenergy.com.cn.key.pem
+req -config intermediate/openssl.cnf -key intermediate/private/zk-wenergy.com.cn.key.pem -new -sha256 -out intermediate/csr/zk-wenergy.com.cn.csr.pem
+
+##To create a certificate, use the intermediate CA to sign the CSR. 
+##If the certificate is going to be used on a server, use the server_cert extension. 
+##If the certificate is going to be used for user authentication, use the usr_cert extension. 
+##Certificates are usually given a validity of one year, though a CA will typically give a few days extra for convenience.
+ca -config intermediate/openssl.cnf -extensions usr_cert -days 375 -notext -md sha256 -in intermediate/csr/zk-wenergy.com.cn.csr.pem -out intermediate/certs/zk-wenergy.com.cn.cert.pem
+# chmod 444 intermediate/certs/zk-wenergy.com.cn.cert.pem
+
+Verify the certificate
+x509 -noout -text -in intermediate/certs/zk-wenergy.com.cn.cert.pem
+
+#Use the CA certificate chain file we created earlier (ca-chain.cert.pem) to verify that the new certificate has a valid chain of trust.
+verify -CAfile intermediate/certs/ca-chain.cert.pem intermediate/certs/zk-wenergy.com.cn.cert.pem
+
+#>www.example.com.cert.pem: OK
+
+
+
+#Deploy the certificate
+#You can now either deploy your new certificate to a server, 
+#or distribute the certificate to a client. When deploying to a server application (eg, Apache), 
+#you need to make the following files available:
+
+#ca-chain.cert.pem
+#www.example.com.key.pem
+#www.example.com.cert.pem
+#If you’re signing a CSR from a third-party, 
+#you don’t have access to their private key so you only need to give them back the chain file (ca-chain.cert.pem) and the certificate (www.example.com.cert.pem).
+pkcs12 -export -out intermediate.p12 -inkey intermediate/private/intermediate.key.pem -in intermediate/certs/intermediate.cert.pem -chain -CAfile certs/ca-chain.cert.pem
+
+pkcs12 -export -out zk-wenergy.com.cn.key.p12 -inkey intermediate/private/zk-wenergy.com.cn.key.pem -in intermediate/certs/zk-wenergy.com.cn.cert.pem -chain -CAfile intermediate/certs/ca-chain.cert.pem
+
+pkcs12 -info -in 
+gg
+
+x509 -in intermediate.p12 -fingerprint -noout

@@ -5,5 +5,5 @@ docker run --network my-net-bridge --name mysql8-master --restart on-failure -p 
 docker exec -it mysql8-master bash
 mysql -uroot -p
 
-CREATE USER 'bing'@'%' IDENTIFIED WITH mysql_native_password BY 'xxxxxx';
+CREATE USER 'ybing'@'%' IDENTIFIED WITH mysql_native_password BY 'xxxxxx';
 GRANT ALL PRIVILEGES ON *.* TO 'bing'@'%';
